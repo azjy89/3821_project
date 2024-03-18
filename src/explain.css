@@ -1,0 +1,14 @@
+body {
+    background-color: rgb(15, 15, 15);
+    overflow: hidden;
+    margin: 0px;
+    place-items: center;
+}
+
+h1 {
+    height: 90vh;
+    color: white;
+    font-family: "Rubik", sans-serif;
+    font-size: clamp(3rem, 3vw, 8rem);
+    padding: clamp(0.25rem, 0vw, 1rem) 3rem;
+}
