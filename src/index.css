@@ -3,14 +3,15 @@ body {
     overflow: hidden;
     margin: 0px;
     place-items: center;
+    font-family: "Rubik", sans-serif;
 }
 
 h1 {
-    height: 90vh;
+    height: 10vh;
     color: white;
-    font-family: "Rubik", sans-serif;
+    display: block;
     font-size: clamp(3rem, 3vw, 8rem);
-    padding: clamp(0.25rem, 0vw, 1rem) 3rem;
+    padding: clamp(0rem, 0vw, 1rem) 2rem;
 }
 
 @keyframes background-pan {
@@ -44,4 +45,48 @@ h1 > .effect {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     white-space: nowrap;
+}
+
+#menu {
+    height: 2vh;
+    display: flex;
+    align-items: center;
+    margin-top: 13vh;
+}
+
+#menu-items {
+    margin-left: clamp(4rem, 94vw, 94rem);
+    position: relative;
+    z-index: 2;
+}
+
+#menu-items:hover > .menu-item {
+    position: relative;
+    opacity: 0.3;
+    z-index: 2;
+}
+
+#menu-items:hover > .menu-item:hover {
+    opacity: 1;
+}
+
+.menu-item {
+    color: white;
+    font-size: clamp(1rem, 2vw, 8rem);
+    font-family: "Rubik", sans-serif;
+
+    display: block;
+    text-decoration: none;
+    padding: clamp(0.25rem, 0.5vw, 1rem) 0rem;
+    transition: opacity 400ms ease;
+}
+
+button, input[type="submit"], input[type="reset"] {
+	background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	cursor: pointer;
+	outline: inherit;
 }
