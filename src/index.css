@@ -4,14 +4,22 @@ body {
     margin: 0px;
     place-items: center;
     font-family: "Rubik", sans-serif;
+    height: 300;
 }
 
-h1 {
-    height: 10vh;
+.prevent-select {
+    -webkit-user-select: none; 
+    -ms-user-select: none; 
+    user-select: none; 
+}
+
+#title {
+    height: 5vh;
     color: white;
     display: block;
+    position: absolute;
     font-size: clamp(3rem, 3vw, 8rem);
-    padding: clamp(0rem, 0vw, 1rem) 2rem;
+    padding: clamp(0rem, 0vw, 1rem) 1rem;
 }
 
 @keyframes background-pan {
@@ -24,7 +32,7 @@ h1 {
     }
 }
 
-h1 > .effect {
+#title > .effect {
     --purple: rgb(158, 20, 223);
     --violet: rgb(129, 43, 199);
     --blue: rgb(63, 46, 223);
@@ -50,20 +58,18 @@ h1 > .effect {
 #menu {
     height: 2vh;
     display: flex;
-    align-items: center;
-    margin-top: 13vh;
+    align-items: right;
+    margin-top: 0vh;
 }
 
 #menu-items {
-    margin-left: clamp(4rem, 94vw, 94rem);
+    margin-left: clamp(4rem, 101vw, 101rem);
     position: relative;
-    z-index: 2;
 }
 
 #menu-items:hover > .menu-item {
     position: relative;
     opacity: 0.3;
-    z-index: 2;
 }
 
 #menu-items:hover > .menu-item:hover {
@@ -90,3 +96,5 @@ button, input[type="submit"], input[type="reset"] {
 	cursor: pointer;
 	outline: inherit;
 }
+
+.graph{position:absolute; height:500px; width: 500px; z-index:1;}

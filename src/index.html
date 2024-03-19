@@ -7,19 +7,23 @@
 	</head>
 </html>
 
-<h1>
+<div id="title" class="prevent-select">
 	Flow Network <span class = "effect">Visualizer</span>
-</h1>
-
+</div>
 
 <body>
 	<div id="menu">
-		<div id="menu-items">
+		<div id="menu-items" class="prevent-select">
 			<button class="menu-item">Ford-Fulkerson</button>
 			<button class="menu-item">Edmonds-Karp</button>
 			<button class="menu-item">Dinic's</button>
-			<button href="explain.html"class="menu-item">Explained</button>
+			<a href="/explain.html" class="menu-item">Explained</a>
 		</div>
 	</div>
 </body>
 
+<div onmousedown="" class="graph" id="graph">
+	<div id = "placeholder" style="height:50px;width:50px;background-color:red;"></div>
+	<div style="position:absolute;top:200px;right:300px;height:50px;width:50px;background-color:blue;"></div>
+	<script src="script.js"></script>
+</div>
