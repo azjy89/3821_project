@@ -25,3 +25,4 @@ function OnMouseUp(event){
   document.onmousemove = null;
   _dragElement=null;
 }
+
