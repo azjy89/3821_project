@@ -35,6 +35,7 @@ var boundaryWidth = width - margin.left - margin.right;
 var boundaryHeight = height - margin.top - margin.bottom;
 
 var nodes = [],
+edges = [],
 nodeId = 0;
 
 var simulation = d3.forceSimulation(nodes)
