@@ -4,22 +4,32 @@
 	<head>
 		<meta charset="UTF-8">
 		<link rel="stylesheet" href="index.css">
+		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<style src="index.css"></style>
 	</head>
-</html>
 
-<h1>
+<div id="title" class="prevent-select">
 	Flow Network <span class = "effect">Visualizer</span>
-</h1>
-
-
+</div>
 <body>
 	<div id="menu">
-		<div id="menu-items">
+		<div id="menu-items" class="prevent-select">
 			<button class="menu-item">Ford-Fulkerson</button>
 			<button class="menu-item">Edmonds-Karp</button>
 			<button class="menu-item">Dinic's</button>
-			<button href="explain.html"class="menu-item">Explained</button>
+			<a href="/explain.html" class="menu-item">Explained</a>
 		</div>
 	</div>
+	<div id="node-form">
+		<input type="number" id="node-count" placeholder="Enter number of nodes" min="1">
+		<button onclick="addNodes()">Add Nodes</button>
+	</div>
+	<svg></svg>
+    <script src="script.js"></script>
 </body>
+<div class="l-container">
+	<div class="l-horizontal"></div>
+	<div class="l-vertical"></div>
+</div>	
 
+</html>

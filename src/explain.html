@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 
-
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<link rel="stylesheet" href="explain.css">
+		<link rel="stylesheet" href="index.css">
 	</head>
 </html>
 
+<div id="title">
+	Flow Network <span class = "effect">Visualizer</span>
+</div>
+
 <body>
-	<h1>What is a flow network?</h1>
-	<p>A flow network is a directed graph where each node has a capacity and each edge recieves a flow.
-		This graph is generally used to model the transportation of resources between locations which have a network of routes with limited capacity,
-		which naturally brings up the problem of maximum flow. Finding out maximum flow to allow for the most efficient routes have real world applications
-		such as in transport, utilities and economics.</p>
-
-	<h1>How does the Ford-Fulkerson algorithm work?</h1>
-	<p>The Ford-Fulkerson algorithm was discovered in 1956 and can vary from implementation as it is not fully specified. 
-		The algorithm works by repeatedly finding augmented paths and calculating flow throughout the routes that are available as well as residual capacity as well. </p>
+	<div id="menu">
+		<div id="menu-items">
+			<button class="menu-item">Ford-Fulkerson</button>
+			<button class="menu-item">Edmonds-Karp</button>
+			<button class="menu-item">Dinic's</button>
+			<a href="/explain.html" class="menu-item">Explained</a>
+		</div>
+	</div>
 </body>
-
