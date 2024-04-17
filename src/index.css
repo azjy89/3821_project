@@ -148,11 +148,12 @@ svg {
         pointer-events: none;
         fill: #333;
     }
+
 #node-form {
     width: 200px;
     position: fixed;
     right: 0;
-    top: 0;
+    top: 80%;
     height: 200px;
     background-color: #f9f9f9;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
@@ -160,4 +161,13 @@ svg {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    }
+}
+
+#mynetwork {
+    position: absolute;
+    top: 8%;
+    left: 0%;
+    width: 78%;
+    height: 85%;
+    border: 1px solid black;
+}

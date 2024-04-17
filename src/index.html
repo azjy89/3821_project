@@ -4,7 +4,8 @@
 	<head>
 		<meta charset="UTF-8">
 		<link rel="stylesheet" href="index.css">
-		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<title>Interactive Directed Graph</title>
+		<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 		<style src="index.css"></style>
 	</head>
 
@@ -18,18 +19,99 @@
 			<button class="menu-item">Edmonds-Karp</button>
 			<button class="menu-item">Dinic's</button>
 			<a href="/explain.html" class="menu-item">Explained</a>
+			<button class="menu-item" onclick="animateTraversal()">Animate</button>
 		</div>
 	</div>
-	<div id="node-form">
-		<input type="number" id="node-count" placeholder="Enter number of nodes" min="1">
-		<button onclick="addNodes()">Add Nodes</button>
-	</div>
-	<svg></svg>
-    <script src="script.js"></script>
+	<div id="mynetwork"></div>
+    <script type="text/javascript">
+        var nodes = new vis.DataSet([
+            { id: 0, label: 'source' },
+            { id: 1, label: 'sink' }
+        ]);
+
+        var edges = new vis.DataSet([
+            { from: Number, to: Number }
+        ]);
+
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+
+        var options = {
+            edges: {
+                arrows: {
+                    to: { enabled: true, scaleFactor: 1.2 }
+                }
+            },
+            physics: {
+                stabilization: false
+            },
+            manipulation: {
+                enabled: true,
+                initiallyActive: true,
+                addNode: function (data, callback) {
+                    // This function is called by the library to add a node
+                    var newNodeId = nodes.length + 1;
+                    data.label = 'Node ' + newNodeId;
+                    data.id = newNodeId;
+                    callback(data); // Adds the node to the graph
+                },
+                addEdge: function (data, callback) {
+                    if (data.from === data.to) {
+                        alert("Connecting the node to itself is not allowed.");
+                    } else {
+                        var capacity = prompt("Enter edge capacity:", "1");
+                        if (capacity !== null) {
+                            data.label = capacity;
+                            callback(data);
+                        }
+                    }
+                }
+            }
+        };
+
+        var network = new vis.Network(container, data, options);
+
+        function addNode() {
+            var newNodeId = nodes.length + 1;
+            nodes.add({ id: newNodeId, label: 'Node ' + newNodeId });
+        }
+
+        function animateTraversal() {
+            // Iterate through all nodes
+            nodes.getIds().forEach((nodeId, index) => {
+                setTimeout(() => {
+                    // Highlight node
+                    var nodeToUpdate = nodes.get(nodeId);
+                    nodeToUpdate.color = 'lime';
+                    nodes.update(nodeToUpdate);
+
+                    // Find all connected edges and highlight them
+                    edges.get().forEach((edge) => {
+                        if (edge.from === nodeId) {
+                            var edgeToUpdate = edges.get(edge.id);
+                            edgeToUpdate.color = 'red';
+                            edges.update(edgeToUpdate);
+
+                            // Animate edge and reset color
+                            setTimeout(() => {
+                                edgeToUpdate.color = '#848484';
+                                edges.update(edgeToUpdate);
+                            }, 1000);
+                        }
+                    });
+
+                    // Reset node color after a delay
+                    setTimeout(() => {
+                        nodeToUpdate.color = '#97C2FC';
+                        nodes.update(nodeToUpdate);
+                    }, 2000);
+                }, 2000 * index);
+            });
+        }
+    </script>
 </body>
-<div class="l-container">
-	<div class="l-horizontal"></div>
-	<div class="l-vertical"></div>
-</div>	
 
 </html>
