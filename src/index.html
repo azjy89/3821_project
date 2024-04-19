@@ -1,136 +1,138 @@
 <!DOCTYPE html>
 
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<link rel="stylesheet" href="index.css">
-		<title>Interactive Directed Graph</title>
-		<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-		<style src="index.css"></style>
-	</head>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="index.css">
+    <title>Interactive Directed Graph</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style src="index.css"></style>
+</head>
 
 <div id="title" class="prevent-select">
-	Flow Network <span class = "effect">Visualizer</span>
+    Flow Network <span class="effect">Visualizer</span>
 </div>
+
 <body>
-	<div id="menu">
-		<div id="menu-items" class="prevent-select">
-			<button class="menu-item" onclick="callEdmondsKarp()" id="edmondsKarpButton">Edmonds-Karp</button>
-			<button class="menu-item" onclick="callDinics()" id="dinicsButton">Dinic's</button>
-			<a href="/explain.html" class="menu-item">Explained</a>
-			<button class="menu-item" onclick="animateGraph()">Run Animation</button>
-		</div>
-	</div>
-	<div id="mynetwork"></div>
+    <div id="menu">
+        <div id="menu-items" class="prevent-select">
+            <button class="menu-item" onclick="callEdmondsKarp()" id="edmondsKarpButton">Edmonds-Karp</button>
+            <button class="menu-item" onclick="callDinics()" id="dinicsButton">Dinic's</button>
+            <a href="/explain.html" class="menu-item">Explained</a>
+            <button class="menu-item" onclick="animateGraph()">Run Animation</button>
+        </div>
+    </div>
+    <div id="mynetwork"></div>
     <script type="text/javascript">
-		function sleepSync(ms) {
-		const startTime = new Date().getTime();
-		while (new Date().getTime() - startTime < ms) {
-			// zzzZZ - comment needed so eslint doesn't complain
-			}
-		}
-		// mapping the VertexStyles generated in algorithms to their appropriate
-		// colours (refer to VertexStyles)
-		function doVertexColour(vertexStyle) {
-			switch(style) {
-				case VertexStyles.UNSEEN:
-					return 'lime';
-				case VertexStyles.BFS_SELECTED:
-					return 'lime';
-				case VertexStyles.BFS_SEEN:
-					return 'lime';
-				case VertexStyles.BFS_INPATH:
-					return 'lime';
-				case VertexStyles.DFS_SELECTED:
-					return 'lime';
-				case VertexStyles.DFS_ONSTACK:
-					return 'lime';
-				case VertexStyles.DFS_SEEN:
-					return 'lime';
-				case VertexStyles.DFS_INPATH:
-			}
-		}
+        function sleepSync(ms) {
+            const startTime = new Date().getTime();
+            while (new Date().getTime() - startTime < ms) {
+                // zzzZZ - comment needed so eslint doesn't complain
+            }
+        }
+        // mapping the VertexStyles generated in algorithms to their appropriate
+        // colours (refer to VertexStyles)
+        function doVertexColour(vertexStyle) {
+            switch (style) {
+                case VertexStyles.UNSEEN:
+                    return 'lime';
+                case VertexStyles.BFS_SELECTED:
+                    return 'lime';
+                case VertexStyles.BFS_SEEN:
+                    return 'lime';
+                case VertexStyles.BFS_INPATH:
+                    return 'lime';
+                case VertexStyles.DFS_SELECTED:
+                    return 'lime';
+                case VertexStyles.DFS_ONSTACK:
+                    return 'lime';
+                case VertexStyles.DFS_SEEN:
+                    return 'lime';
+                case VertexStyles.DFS_INPATH:
+            }
+        }
 
-		// mapping the EdgeStyles generated in algorithms to their appropriate
-		// colours (refer to EdgeStyles)
-		function doStyleColour(edgeStyle) {
-			switch(edgeStyle) {
-				case EdgeStyles.NULL:
-					return 'lime';
-				case EdgeStyles.UNSEEN:
-					return 'lime';
-				case EdgeStyles.BFS_SELECTED:
-					return 'lime';
-				case EdgeStyles.BFS_SEEN:
-					return 'lime';
-				case EdgeStyles.BFS_INPATH:
-					return 'lime';
-				case EdgeStyles.DFS_SELECTED:
-					return 'lime';
-				case EdgeStyles.DFS_ONSTACK:
-					return 'lime';
-				case EdgeStyles.DFS_SEEN:
-					return 'lime';
-				case EdgeStyles.DFS_INPATH:
-			}
-		}
-		// datastore for animation data, the algorithm functions store their 
-		// data here after the user has selected the algorithm, but not yet
-		// chosen to run the animation
-		let animationData = {
-			numVertices: 0,
-			numEdges: 0,
-			frames: []
-		};
+        // mapping the EdgeStyles generated in algorithms to their appropriate
+        // colours (refer to EdgeStyles)
+        function doStyleColour(edgeStyle) {
+            switch (edgeStyle) {
+                case EdgeStyles.NULL:
+                    return 'lime';
+                case EdgeStyles.UNSEEN:
+                    return 'lime';
+                case EdgeStyles.BFS_SELECTED:
+                    return 'lime';
+                case EdgeStyles.BFS_SEEN:
+                    return 'lime';
+                case EdgeStyles.BFS_INPATH:
+                    return 'lime';
+                case EdgeStyles.DFS_SELECTED:
+                    return 'lime';
+                case EdgeStyles.DFS_ONSTACK:
+                    return 'lime';
+                case EdgeStyles.DFS_SEEN:
+                    return 'lime';
+                case EdgeStyles.DFS_INPATH:
+            }
+        }
+        // datastore for animation data, the algorithm functions store their 
+        // data here after the user has selected the algorithm, but not yet
+        // chosen to run the animation
+        let animationData = {
+            numVertices: 0,
+            numEdges: 0,
+            frames: []
+        };
 
-		// This function turns the data used by visJs (data that the user can
-		// use to input a graph) into data which can be used by the flow 
-		// algorithms
-		function graphDataCreate() {
-			const graphData = {
-				num_vertices: data.nodes.getIds().length,
-				num_edges: data.edges.getIds().length,
-				edges: [],
-			};
+        // This function turns the data used by visJs (data that the user can
+        // use to input a graph) into data which can be used by the flow 
+        // algorithms
+        function graphDataCreate() {
+            const graphData = {
+                num_vertices: data.nodes.getIds().length,
+                num_edges: data.edges.getIds().length,
+                edges: [],
+            };
             const edges = data.edges.get();
-			for (const edge of edges) {
-				const graphEdge = {
-					from: edge.from - 1,
-					to: edge.to - 1,
-					capacity: parseInt(edge.label),
-				}
-				graphData.edges.push(graphEdge);
-			}
-			return graphData;
-		}
+            for (const edge of edges) {
+                const graphEdge = {
+                    from: edge.from - 1,
+                    to: edge.to - 1,
+                    capacity: parseInt(edge.label),
+                }
+                graphData.edges.push(graphEdge);
+            }
+            return graphData;
+        }
 
         // this function will retrieve the data from the graph which the
         // user has built and give it to the dinics algorithm and then retrieves
         // the data for the animation of dinics and puts it into a form in 
         // which vis.js can use
         function callDinics() {
-			// converting data into form usable by the algorithm
-			const graph_data= graphDataCreate();
-			// running the algorithm
+            // converting data into form usable by the algorithm
+            const graph_data = graphDataCreate();
+            // running the algorithm
             const animation_builder = DinicsResult(graph_data)
             const animation = animation_builder.export()
-			// updating the global datastore which contains the frame information
-			animationData = animation;
+            // updating the global datastore which contains the frame information
+            animationData = animation;
         }
 
         // this function will retrieve the data from the graph which the
         // user has built and give it to the edmodns-karp algorithm and then 
-		// retrieves the data for the animation of dinics and puts it into a 
-		// form in which vis.js can use
+        // retrieves the data for the animation of dinics and puts it into a 
+        // form in which vis.js can use
         function callEdmondsKarp() {
-			// converting data into form usable by the algorithm
-			const graph_data = graphDataCreate();
-			// running the algorithm
+            // converting data into form usable by the algorithm
+            const graph_data = graphDataCreate();
+            // running the algorithm
             console.log(graph_data);
             const animation_builder = EdmondsKarpResult(graph_data)
             const animation = animation_builder.export()
-			// updating the global datastore which contains the frame information
-			animationData = animation;
+            // updating the global datastore which contains the frame information
+            animationData = animation;
         }
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +154,7 @@
         // interpretation of styles is up to the visualiser
         const VertexStyles = {
             UNSEEN: 0,
-            BFS_SELECTED: 1, 
+            BFS_SELECTED: 1,
             BFS_SEEN: 2,
             BFS_INPATH: 3, // exclusive to Edmonds-Karp, for when path is found using BFS
             DFS_SELECTED: 4,
@@ -183,7 +185,7 @@
             constructor(vertexId) {
                 // vertex id is unique
                 this.id = vertexId;
-                
+
                 // bfs information
                 this.bfsSelected = false;
                 this.bfsSeen = false;
@@ -290,7 +292,7 @@
                 for (let i = 0; i < graphInfo.num_vertices; i++) {
                     this.vertices.push(new VertexInfo(i));
                 }
-                
+
                 // fill edge matrix with edge instances
                 for (let i = 0; i < graphInfo.num_vertices; i++) {
                     let r = [];
@@ -461,7 +463,7 @@
              * @param {ResidualGraph} graph - a residual graph
              */
             capture(graph) {
-                
+
                 /**
                  * The logic for determining the style of a vertex
                  * @param {VertexInfo} vertex 
@@ -476,7 +478,7 @@
                     if (vertex.dfsSeen) return VertexStyles.DFS_SEEN;
 
                     if (vertex.bfsInPath) return VertexStyles.BFS_INPATH;
-                    
+
                     if (vertex.bfsSelected) return VertexStyles.BFS_SELECTED;
                     if (vertex.bfsSeen) return VertexStyles.BFS_SEEN;
 
@@ -537,7 +539,7 @@
                     }),
                     edges: graph.edges.map(row => row.map(e => {
                         return {
-                            label: getEdgeLabel(e), 
+                            label: getEdgeLabel(e),
                             style: getEdgeStyle(e),
                         };
                     })),
@@ -596,7 +598,7 @@
                             let edge = graph.edges[backtracker.dfsPred][backtracker.id];
                             pathEdges.push(edge);
                             minCapacity = Math.min(minCapacity, edge.capacity);
-            
+
                             // traverse the backtracker
                             backtracker = graph.vertices[backtracker.dfsPred];
                             pathVertices.push(backtracker);
@@ -675,7 +677,7 @@
                 for (let e of pathEdges) {
                     e.bfsInPath = true;
                 }
-                
+
                 graph.publish();
 
                 // augment the flow
@@ -704,8 +706,8 @@
         }
 
         var nodes = new vis.DataSet([
-            { id: 1, label: 'source' },
-            { id: 2, label: 'sink' }
+            { id: 1, label: 'source', color: 0 },
+            { id: 2, label: 'sink', color: 0 }
         ]);
 
         var edges = new vis.DataSet([
@@ -743,7 +745,7 @@
                     } else {
                         var capacity = prompt("Enter edge capacity:", "1");
                         if (capacity !== null) {
-                            data.label = capacity; 
+                            data.label = capacity;
                             callback(data);
                         }
                     }
@@ -752,49 +754,71 @@
         };
 
         var network = new vis.Network(container, data, options);
-		const speed = 1;
-		// wait what is this addNode function :sob:
+        const speed = 1;
+        // wait what is this addNode function :sob:
         function addNode() {
             var newNodeId = nodes.length;
             nodes.add({ id: newNodeId, label: 'Node ' + newNodeId });
         }
 
         function animateGraph() {
-			console.log(animationData);
-			for (const frame of animationData.frames) {
-				for (const [vertexIndex, vertex] of frame.vertices.entries()) {
-					// empty data of previous frame data
-					nodes.clear();
-					// accounting to correclty label source node
-					if (vertexIndex === '0') {
-						nodes.add({ id: parseInt(vertexIndex), label: 'Source' });
-						data.nodes.color = doStyleColour(vertex.style);
-						continue;
-					}
-					// accounting to correclty label sink node
-					if (vertexIndex === '1') {
-						nodes.add({ id: parseInt(vertexIndex), label: 'Sink' });
-						data.nodes.color = doStyleColour(vertex.style);
-						continue;
-					}
-					
-					nodes.add({ id: parseInt(vertexIndex), label: 'Node ' + vertex.label });
-					
-				}
-				// adding in the edges
+            console.log("Start function");
+            let frameIndex = 0;
+
+            function processFrame() {
+                if (frameIndex >= animationData.frames.length) return; // Stop if no more frames
+
+                const frame = animationData.frames[frameIndex++];
+                console.log(frame);
+
+                // Clear existing nodes and edges
+                nodes.clear();
                 edges.clear();
-				for (const [fromNodeIndex, fromNode] of frame.edges.entries()) {
-                    for (const [toNodeIndex, toNode] of frame.edges.entries()) {
-                        edges.add({ from: fromNodeIndex, to: toNodeIndex , label: frame.edges[fromNodeIndex][toNodeIndex].label, color: doStyleColour(edges[fromNodeIndex][toNodeIndex])});
+
+                console.log("Frame Index: " + frameIndex + "\n Node array length: " + nodes.length + "\n Edge array length: " + edges.length);
+
+                // Process each vertex in the frame
+                frame.vertices.forEach((vertex, index) => {
+                    let x = (index * 150) % 800; // Spread nodes across the width of the canvas
+                    let y = 200 + (Math.floor(index / 5) * 100); // Arrange nodes in rows
+
+                    // Custom handling for source and sink based on index or label
+                    if (vertex.label === 'Source' || vertex.label === 'source') {
+                        y -= 100; // Position source above other nodes
+                    } else if (vertex.label === 'Sink' || vertex.label === 'sink') {
+                        y += 100; // Position sink below other nodes
                     }
-				}
-                //for debugging
-                console.log(nodes.get());
-                console.log(edges.get());
-                // wait one seconds each fram?
-				sleepSync(speed * 1000);
-			}
+
+                    nodes.add({
+                        id: index,
+                        label: vertex.label || ('Node ' + index),
+                        x: x,
+                        y: y,
+                        color: doStyleColour(vertex.style),
+                        fixed: true
+                    });
+                });
+
+                // Process each edge in the frame
+                frame.edges.forEach((edge, fromIndex) => {
+                    if (edge.exists) { // Check if the edge should exist
+                        edges.add({
+                            from: edge.from,
+                            to: edge.to,
+                            label: edge.capacity.toString(),
+                            color: doStyleColour(edge.style),
+                            arrows: 'to'
+                        });
+                    }
+                });
+
+                // Schedule next frame update
+                setTimeout(processFrame, speed * 1000); // speed is the delay between frames in seconds
+            }
+
+            processFrame(); // Start the animation
         }
+
     </script>
 </body>
 
