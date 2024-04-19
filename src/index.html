@@ -77,7 +77,7 @@
 		// datastore for animation data, the algorithm functions store their 
 		// data here after the user has selected the algorithm, but not yet
 		// chosen to run the animation
-		const animationData = {
+		let animationData = {
 			numVertices: 0,
 			numEdges: 0,
 			frames: []
@@ -88,27 +88,21 @@
 		// algorithms
 		function graphDataCreate() {
 			const graphData = {
-				num_vertices: data.nodes.length,
-				num_edges: data.edges.length,
+				num_vertices: data.nodes.getIds().length,
+				num_edges: data.edges.getIds().length,
 				edges: [],
 			};
-
-			for (const edge of data.edges) {
+            const edges = data.edges.get();
+			for (const edge of edges) {
 				const graphEdge = {
-					from: edge.from,
-					to: edge.to,
-					capacity: edge.label,
+					from: edge.from - 1,
+					to: edge.to - 1,
+					capacity: parseInt(edge.label),
 				}
 				graphData.edges.push(graphEdge);
 			}
 			return graphData;
 		}
-
-        const edmondsKarpButton = document.getElementById('edmondsKarpButton');
-        edmondsKarpButton.addEventListener('click', callEdmondsKarp);
-
-        const dinicsButton = document.getElementById('dinicsButton');
-        dinicsButton.addEventListener('click', callDinics);
 
         // this function will retrieve the data from the graph which the
         // user has built and give it to the dinics algorithm and then retrieves
@@ -116,7 +110,7 @@
         // which vis.js can use
         function callDinics() {
 			// converting data into form usable by the algorithm
-			const graphInfo = graphDataCreate();
+			const graph_data= graphDataCreate();
 			// running the algorithm
             const animation_builder = DinicsResult(graph_data)
             const animation = animation_builder.export()
@@ -132,6 +126,7 @@
 			// converting data into form usable by the algorithm
 			const graph_data = graphDataCreate();
 			// running the algorithm
+            console.log(graph_data);
             const animation_builder = EdmondsKarpResult(graph_data)
             const animation = animation_builder.export()
 			// updating the global datastore which contains the frame information
@@ -307,6 +302,7 @@
 
                 // input flow capacity information
                 for (let e of graphInfo.edges) {
+                    console.log(e);
                     this.edges[e.from][e.to].capacity = e.capacity;
                 }
             }
@@ -708,12 +704,11 @@
         }
 
         var nodes = new vis.DataSet([
-            { id: 0, label: 'source' },
-            { id: 1, label: 'sink' }
+            { id: 1, label: 'source' },
+            { id: 2, label: 'sink' }
         ]);
 
         var edges = new vis.DataSet([
-            { from: Number, to: Number }
         ]);
 
         var container = document.getElementById('mynetwork');
@@ -748,7 +743,7 @@
                     } else {
                         var capacity = prompt("Enter edge capacity:", "1");
                         if (capacity !== null) {
-                            data.label = capacity;
+                            data.label = capacity; 
                             callback(data);
                         }
                     }
@@ -760,39 +755,43 @@
 		const speed = 1;
 		// wait what is this addNode function :sob:
         function addNode() {
-            var newNodeId = nodes.length + 1;
+            var newNodeId = nodes.length;
             nodes.add({ id: newNodeId, label: 'Node ' + newNodeId });
         }
 
         function animateGraph() {
-			console.log(data);
+			console.log(animationData);
 			for (const frame of animationData.frames) {
 				for (const [vertexIndex, vertex] of frame.vertices.entries()) {
 					// empty data of previous frame data
-					data.nodes = [];
+					nodes.clear();
 					// accounting to correclty label source node
-					if (vertexIndex === 0) {
-						data.nodes.add({ id: vertexIndex, label: 'Source' });
+					if (vertexIndex === '0') {
+						nodes.add({ id: parseInt(vertexIndex), label: 'Source' });
 						data.nodes.color = doStyleColour(vertex.style);
 						continue;
 					}
 					// accounting to correclty label sink node
-					if (vertexIndex === 1) {
-						data.nodes.add({ id: vertexIndex, label: 'Sink' });
+					if (vertexIndex === '1') {
+						nodes.add({ id: parseInt(vertexIndex), label: 'Sink' });
 						data.nodes.color = doStyleColour(vertex.style);
 						continue;
 					}
 					
-					data.nodes.add({ id: vertexIndex, label: 'Node ' + vertex.label });
-					data.nodes.color = doStyleColour(vertex.style);
+					nodes.add({ id: parseInt(vertexIndex), label: 'Node ' + vertex.label });
+					
 				}
 				// adding in the edges
-				for (const edge of frame.edges) {
-					data.edges = [];
-					data.edges.add({ from: edge.from, to: edge.to });
-					data.edges.color = doStyleColour(edge.style);
+                edges.clear();
+				for (const [fromNodeIndex, fromNode] of frame.edges.entries()) {
+                    for (const [toNodeIndex, toNode] of frame.edges.entries()) {
+                        edges.add({ from: fromNodeIndex, to: toNodeIndex , label: frame.edges[fromNodeIndex][toNodeIndex].label, color: doStyleColour(edges[fromNodeIndex][toNodeIndex])});
+                    }
 				}
-				// wait one second between each frame?
+                //for debugging
+                console.log(nodes.get());
+                console.log(edges.get());
+                // wait one seconds each fram?
 				sleepSync(speed * 1000);
 			}
         }
