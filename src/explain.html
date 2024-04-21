@@ -3,7 +3,7 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<link rel="stylesheet" href="index.css">
+		<link rel="stylesheet" href="explain.css">
 	</head>
 </html>
 
@@ -12,12 +12,46 @@
 </div>
 
 <body>
-	<div id="menu">
-		<div id="menu-items">
-			<button class="menu-item">Ford-Fulkerson</button>
-			<button class="menu-item">Edmonds-Karp</button>
-			<button class="menu-item">Dinic's</button>
-			<a href="/explain.html" class="menu-item">Explained</a>
-		</div>
-	</div>
+	<h1>
+		What is a Flow Network?
+	</h1>
+	<p>
+		A flow network is a directed graph where each node has a capacity and each edge receives a flow. This graph is generally used to model the transportation of 
+		resources between locations which have a network of routes with limited capacity, which naturally brings up the problem of maximum flow. Finding out maximum 
+		flow to allow for the most efficient routes have real world applications such as in transport, utilities and economics.
+	</p>
+	<h1>
+		The Ford-Fulkerson Algorithm
+	</h1>
+	<p>
+		The Ford-Fulkerson algorithm works by finding augmented paths and calculating flow throughout the routes. It starts with the initial flow of zero.
+		If a capacity is not full along a path, which is found using a graph transversal algorithm such as breath-first search or depth-first search, then the algorithm 
+		works by augmenting it through making sure the edge flow does not exceed the given capacity and incoming flow is equal to outgoing flow except for the source 
+		and sink vertices. This is done by increasing the flow along a path by its maximum amount that does not violate the rules mentioned before.
+	</p>
+	<p>The time complexity is O(E &times; F), where E is the number of edges and F is the maximum flow of the graph.</p>
+	<p>The space complexity is O(V &#43; E), as we need to track all of the edges and verticies for the residual graph.</p>
+	<h1>
+		The Edmond-Karp Algorithm
+	</h1>
+	<p>
+		The Edmond-Karp algorithm works by finding the augmented paths and calculating flow throughout the routes. It works very similarly to the Ford-Fulkerson algorithm 
+		as it is an optimised version of the former algorithm, however it specifies to use a breath-first search as a way of finding paths to be augmented. The use of a 
+		breath-first search graph transversal guarantees that the augmented paths found will be the shortest ones, thus saving time from the original algorithm. 
+		
+	</p>
+	<p>The time complexity is then O(VE<sup>2</sup>), where V is the number of vertices and E is the number of edges.</p>
+	<p>The space complexity is O(V &plus; E), similarly to Ford-Fulkerson algorithm.</p>
+	<h1>
+		Dinic's Algorithm
+	</h1>
+	<p>
+		Dinic's algorithm is also an optimisation on the Ford-Fulkerson and Edmond-Karp algorithm. This is done by using a level graph, which determines the level from the 
+		source vertex, and through this, the algorithm can send multiple flows into the graph. It uses the levels to determine the paths quicker by determining if there is a 
+		path from a level 0 to 1 to 2… to the sink vertex level. If there is no more flow that can be added on, meaning there is no capacity or path from the residual graph 
+		then it has reached blocking flow. This use of level graph means that flow is more efficiently sent and the program will terminate earlier than the previous iterations.  
+	</p>
+	<p>The time complexity is O(EV<sup>2</sup>), where E is the number of edges and V is the number of vertices.</p>
+	<p>The space complexity is also O(V &#43; E), since it requires O(V) to store the level array and O(E) to store the graph adjacency list.</p>
+	<a href="index.html"><button>&#60; back</button></a>
 </body>
