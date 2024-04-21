@@ -1,34 +1,825 @@
 <!DOCTYPE html>
 
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<link rel="stylesheet" href="index.css">
-		<script src="https://d3js.org/d3.v6.min.js"></script>
-		<style src="index.css"></style>
-	</head>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="index.css">
+    <title>Interactive Directed Graph</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style src="index.css"></style>
+</head>
 
 <div id="title" class="prevent-select">
-	Flow Network <span class = "effect">Visualizer</span>
+    Flow Network <span class="effect">Visualizer</span>
 </div>
+
 <body>
-	<div id="menu">
-		<div id="menu-items" class="prevent-select">
-			<button class="menu-item">Ford-Fulkerson</button>
-			<button class="menu-item">Edmonds-Karp</button>
-			<button class="menu-item">Dinic's</button>
-		</div>
-	</div>
-	<div id="node-form">
-		<input type="number" id="node-count" placeholder="Enter number of nodes" min="1">
-		<button onclick="addNodes()">Add Nodes</button>
-	</div>
-	<svg></svg>
-    <script src="script.js"></script>
+    <div id="menu">
+        <div id="menu-items" class="prevent-select">
+            <button class="menu-item" onclick="callEdmondsKarp()" id="edmondsKarpButton">Edmonds-Karp</button>
+            <button class="menu-item" onclick="callDinics()" id="dinicsButton">Dinic's</button>
+            <a href="/explain.html" class="menu-item">Explained</a>
+            <button class="menu-item" onclick="animateGraph()">Run Animation</button>
+        </div>
+    </div>
+    <div id="mynetwork"></div>
+    <script type="text/javascript">
+        function sleepSync(ms) {
+            const startTime = new Date().getTime();
+            while (new Date().getTime() - startTime < ms) {
+                // zzzZZ - comment needed so eslint doesn't complain
+            }
+        }
+        // mapping the VertexStyles generated in algorithms to their appropriate
+        // colours (refer to VertexStyles)
+        function doVertexColour(vertexStyle) {
+            switch (style) {
+                case VertexStyles.UNSEEN:
+                    return 'lime';
+                case VertexStyles.BFS_SELECTED:
+                    return 'lime';
+                case VertexStyles.BFS_SEEN:
+                    return 'lime';
+                case VertexStyles.BFS_INPATH:
+                    return 'lime';
+                case VertexStyles.DFS_SELECTED:
+                    return 'lime';
+                case VertexStyles.DFS_ONSTACK:
+                    return 'lime';
+                case VertexStyles.DFS_SEEN:
+                    return 'lime';
+                case VertexStyles.DFS_INPATH:
+            }
+        }
+
+        // mapping the EdgeStyles generated in algorithms to their appropriate
+        // colours (refer to EdgeStyles)
+        function doStyleColour(edgeStyle) {
+            switch (edgeStyle) {
+                case EdgeStyles.NULL:
+                    return 'lime';
+                case EdgeStyles.UNSEEN:
+                    return 'lime';
+                case EdgeStyles.BFS_SELECTED:
+                    return 'lime';
+                case EdgeStyles.BFS_SEEN:
+                    return 'lime';
+                case EdgeStyles.BFS_INPATH:
+                    return 'lime';
+                case EdgeStyles.DFS_SELECTED:
+                    return 'lime';
+                case EdgeStyles.DFS_ONSTACK:
+                    return 'lime';
+                case EdgeStyles.DFS_SEEN:
+                    return 'lime';
+                case EdgeStyles.DFS_INPATH:
+            }
+        }
+        // datastore for animation data, the algorithm functions store their 
+        // data here after the user has selected the algorithm, but not yet
+        // chosen to run the animation
+        let animationData = {
+            numVertices: 0,
+            numEdges: 0,
+            frames: []
+        };
+
+        // This function turns the data used by visJs (data that the user can
+        // use to input a graph) into data which can be used by the flow 
+        // algorithms
+        function graphDataCreate() {
+            const graphData = {
+                num_vertices: data.nodes.getIds().length,
+                num_edges: data.edges.getIds().length,
+                edges: [],
+            };
+            const edges = data.edges.get();
+            for (const edge of edges) {
+                const graphEdge = {
+                    from: edge.from - 1,
+                    to: edge.to - 1,
+                    capacity: parseInt(edge.label),
+                }
+                graphData.edges.push(graphEdge);
+            }
+            return graphData;
+        }
+
+        // this function will retrieve the data from the graph which the
+        // user has built and give it to the dinics algorithm and then retrieves
+        // the data for the animation of dinics and puts it into a form in 
+        // which vis.js can use
+        function callDinics() {
+            // converting data into form usable by the algorithm
+            const graph_data = graphDataCreate();
+            // running the algorithm
+            const animation_builder = DinicsResult(graph_data)
+            const animation = animation_builder.export()
+            // updating the global datastore which contains the frame information
+            animationData = animation;
+        }
+
+        // this function will retrieve the data from the graph which the
+        // user has built and give it to the edmodns-karp algorithm and then 
+        // retrieves the data for the animation of dinics and puts it into a 
+        // form in which vis.js can use
+        function callEdmondsKarp() {
+            // converting data into form usable by the algorithm
+            const graph_data = graphDataCreate();
+            // running the algorithm
+            console.log(graph_data);
+            const animation_builder = EdmondsKarpResult(graph_data)
+            const animation = animation_builder.export()
+            // updating the global datastore which contains the frame information
+            animationData = animation;
+        }
+
+        ////////////////////////////////////////////////////////////////////////////////
+        /// Written by Jeff Lu for COMP3821 Assignment
+        /// Max Flow Solver and Visualiser
+        ////////////////////////////////////////////////////////////////////////////////
+        /*
+        Comments:
+        Jeff: the state of the program (whether its in the dfs stage etc) is 
+        determined using the vertex info by the animation builder?? wtf?? 
+        whatever the tech debt can't be too bad
+        Jeff: there is also a weird thing where the graph is allowed to be in invalid 
+        states after a call to a method. not good but who cares
+        */
+        ////////////////////////////////////////////////////////////////////////////////
+
+
+        // vertex style enum
+        // interpretation of styles is up to the visualiser
+        const VertexStyles = {
+            UNSEEN: 0,
+            BFS_SELECTED: 1,
+            BFS_SEEN: 2,
+            BFS_INPATH: 3, // exclusive to Edmonds-Karp, for when path is found using BFS
+            DFS_SELECTED: 4,
+            DFS_ONSTACK: 5,
+            DFS_SEEN: 6,
+            DFS_INPATH: 7, // exclusive to Dinics, when path is found on level graph
+        };
+
+        // edge style enum
+        // interpretation of styles is up to the visualiser
+        const EdgeStyles = {
+            NULL: 0, // when an edge has zero residual capacity
+            UNSEEN: 1, // when an edge has a positive residual capacity
+            BFS_SELECTED: 2, // edge is being considered in the BFS
+            BFS_SEEN: 3,  // edge has been added to the BFS tree
+            BFS_INPATH: 4, // exclusive to Edmonds-Karp, for when path is found using BFS
+            DFS_SELECTED: 5, // edge is being considered in the DFS
+            DFS_ONSTACK: 6, // edge is currently on the DFS stack
+            DFS_SEEN: 7, // edge has been seen and discarded in the dfs
+            DFS_INPATH: 8, // exclusive to Dinics, when path is found on level graph
+        };
+
+        /**
+         * Struct for storing vertex information
+         * vertexId is redundant information, but will increase efficiency
+         */
+        class VertexInfo {
+            constructor(vertexId) {
+                // vertex id is unique
+                this.id = vertexId;
+
+                // bfs information
+                this.bfsSelected = false;
+                this.bfsSeen = false;
+                this.bfsInPath = false;
+                this.bfsPred = null;
+
+                // level graph information
+                this.level = Infinity;
+
+                // dfs information
+                this.dfsSelected = false;
+                this.dfsSeen = false;
+                this.dfsOnStack = false;
+                this.dfsInPath = false;
+                this.dfsPred = null;
+            }
+
+            bfsReset() {
+                this.bfsSelected = false;
+                this.bfsSeen = false;
+                this.bfsInPath = false;
+                this.bfsPred = null;
+                this.level = Infinity;
+            }
+
+            dfsReset() {
+                this.dfsSelected = false;
+                this.dfsSeen = false;
+                this.dfsOnStack = false;
+                this.dfsInPath = false;
+                this.dfsPred = null;
+            }
+
+            fullReset() {
+                this.bfsReset();
+                this.dfsReset();
+            }
+        }
+
+        /**
+         * Struct for storing edge information
+         */
+        class EdgeInfo {
+            constructor(fromVertexId, toVertexId) {
+                // information identifying the edge
+                this.fromVertex = fromVertexId;
+                this.toVertex = toVertexId;
+
+                // residual capacity
+                this.capacity = 0;
+
+
+                // bfs information
+                this.bfsSelected = false;
+                this.bfsSeen = false;
+                this.bfsInPath = false;
+
+                // level graph information
+
+                // dfs information
+                this.dfsSelected = false;
+                this.dfsSeen = false;
+                this.dfsOnStack = false;
+                this.dfsInPath = false;
+            }
+
+            bfsReset() {
+                this.bfsSelected = false;
+                this.bfsSeen = false;
+                this.bfsInPath = false;
+            }
+
+            dfsReset() {
+                this.dfsSelected = false;
+                this.dfsSeen = false;
+                this.dfsOnStack = false;
+                this.dfsInPath = false;
+            }
+
+            fullReset() {
+                this.bfsReset();
+                this.dfsReset();
+            }
+        }
+
+        /**
+         * Class for Residual Graph
+         */
+        class ResidualGraph {
+
+            /**
+             * Constructs the initial residual graph of a flow network 
+             * @param {*} graphInfo - information
+             */
+            constructor(graphInfo) {
+                // member variables
+                this.vertices = [];
+                this.edges = [];
+
+                // for observer pattern
+                this.subscribers = [];
+
+                // fill vertices array with vertex instances
+                for (let i = 0; i < graphInfo.num_vertices; i++) {
+                    this.vertices.push(new VertexInfo(i));
+                }
+
+                // fill edge matrix with edge instances
+                for (let i = 0; i < graphInfo.num_vertices; i++) {
+                    let r = [];
+                    for (let j = 0; j < graphInfo.num_vertices; j++) {
+                        r.push(new EdgeInfo(i, j));
+                    }
+                    this.edges.push(r);
+                }
+
+                // input flow capacity information
+                for (let e of graphInfo.edges) {
+                    console.log(e);
+                    this.edges[e.from][e.to].capacity = e.capacity;
+                }
+            }
+
+            /**
+             * Adds an animation builder to the list of subscribers
+             * @param {AnimationBuilder} builder - an animation builder
+             */
+            subscribe(builder) {
+                this.subscribers.push(builder);
+            }
+
+            /**
+             * Causes all subscribers to capture the current state of the graph
+             */
+            publish() {
+                for (let builder of this.subscribers) {
+                    builder.capture(this);
+                }
+            }
+
+            /**
+             * Performs a bfs through the residual graph, 
+             * labelling each vertex with its predecessor, and level,
+             * updating the animation builder along the way
+             */
+            bfs() {
+                // reset and initialise all vertices
+                for (let v of this.vertices) {
+                    v.fullReset();
+                }
+
+                // reset and initialise all edges
+                for (let row of this.edges) {
+                    for (let e of row) {
+                        e.fullReset();
+                    }
+                }
+
+                // create bfs queue and push the source vertex
+                const queue = [];
+                queue.push(this.vertices[0]);
+                this.vertices[0].level = 0;
+
+                // bfs loop
+                while (queue.length > 0) {
+                    let u = queue.shift();
+                    if (u.bfsSeen) continue;
+
+                    u.bfsSeen = true;
+                    u.bfsSelected = true;
+
+                    if (u.bfsPred != null) {
+                        this.edges[u.bfsPred][u.id].bfsSeen = true;
+                    }
+                    this.publish();
+
+                    // enqueue all unseen children onto the queue
+                    for (let e of this.edges[u.id]) {
+                        // check if the edge has a positive capacity
+                        if (e.capacity <= 0) continue;
+
+                        // check if the neighbour is seen
+                        let v = this.vertices[e.toVertex];
+                        if (v.bfsSeen === false) {
+                            v.level = u.level + 1;
+                            v.bfsPred = u.id;
+                            queue.push(v);
+                        }
+                    }
+
+                    u.bfsSelected = false;
+                }
+            }
+
+            /**
+             * Performs a dfs on the level graph
+             * Only use immediately after a bfs
+             */
+            dfs() {
+                // reset and initialise all vertices
+                for (let v of this.vertices) {
+                    v.dfsReset();
+                }
+
+                // reset and initialise all edges
+                for (let row of this.edges) {
+                    for (let e of row) {
+                        e.dfsReset();
+                    }
+                }
+
+                // make the dfs stack and push the source node
+                const stack = [];
+                stack.push(this.vertices[0]);
+
+                // dfs loop
+                while (stack.length > 0) {
+                    let u = stack.pop();
+                    if (u.dfsSeen) continue;
+
+                    u.dfsSeen = true;
+                    u.dfsSelected = true;
+                    if (u.dfsPred != null) {
+                        this.edges[u.dfsPred][u.id].dfsSeen = true;
+                    }
+                    this.publish();
+
+                    // push all unseen children onto the stack
+                    for (let e of this.edges[u.id]) {
+                        // check if the edge has a positive capacity
+                        if (e.capacity <= 0) continue;
+
+                        // check if edge points to a vertex with a greater level
+                        if (this.vertices[e.toVertex].level <= u.level) continue;
+
+                        // check if the neighbour is seen
+                        let v = this.vertices[e.toVertex];
+                        if (v.dfsSeen === false) {
+                            v.dfsPred = u.id;
+
+                            v.dfsOnStack = true;
+                            e.dfsOnStack = true;
+                            this.publish();
+
+                            stack.push(v);
+                        }
+                    }
+
+                    u.dfsSelected = false;
+                }
+            }
+        }
+
+        /**
+         * Each builder is subscribed to a ResidualGraph
+         * When the ResidualGraph instance calls its publish() method,
+         * a frame is captured
+         */
+        class AnimationBuilder {
+            /**
+             * Constructs a animation builder instance
+             * and subscribes it to the subject graph
+             * @param {ResidualGraph} graph 
+             */
+            constructor(graph) {
+                this.subject = graph;
+                graph.subscribe(this);
+                this.frames = [];
+            }
+
+            /**
+             * Captures the information about the graph as an animation frame.
+             * This will break the encapsulation of the ResidualGraph class
+             * This class is responsible for the logic on how to style
+             * @param {ResidualGraph} graph - a residual graph
+             */
+            capture(graph) {
+
+                /**
+                 * The logic for determining the style of a vertex
+                 * @param {VertexInfo} vertex 
+                 * @returns the style enum
+                 */
+                function getVertexStyle(vertex) {
+                    // this order matters
+
+                    if (vertex.dfsInPath) return VertexStyles.DFS_INPATH;
+                    if (vertex.dfsSelected) return VertexStyles.DFS_SELECTED;
+                    if (vertex.dfsOnStack) return VertexStyles.DFS_ONSTACK;
+                    if (vertex.dfsSeen) return VertexStyles.DFS_SEEN;
+
+                    if (vertex.bfsInPath) return VertexStyles.BFS_INPATH;
+
+                    if (vertex.bfsSelected) return VertexStyles.BFS_SELECTED;
+                    if (vertex.bfsSeen) return VertexStyles.BFS_SEEN;
+
+                    return VertexStyles.UNSEEN;
+                }
+
+                /**
+                 * 
+                 * @param {VertexInfo} vertex 
+                 * @returns the appropriate vertex label
+                 */
+                function getVertexLabel(v) {
+                    if (v.id === 0) return "s";
+                    if (v.id === 1) return "t";
+                    if (v.level != Infinity) return v.level.toString();
+                    return "";
+                }
+
+                /**
+                 * The logic for determining the style of an edge
+                 * @param {EdgeInfo} edge 
+                 * @returns the style enum
+                 */
+                function getEdgeStyle(edge) {
+                    // the order matters
+
+                    if (edge.capacity === 0) return EdgeStyles.NULL;
+
+                    if (edge.dfsInPath) return EdgeStyles.DFS_INPATH;
+                    if (edge.dfsSelected) return EdgeStyles.DFS_SELECTED;
+                    if (edge.dfsOnStack) return EdgeStyles.DFS_ONSTACK;
+                    if (edge.dfsSeen) return EdgeStyles.DFS_SEEN;
+
+                    if (edge.bfsInPath) return EdgeStyles.DFS_INPATH;
+
+                    if (edge.bfsSelected) return EdgeStyles.BFS_SELECTED;
+                    if (edge.bfsSeen) return EdgeStyles.BFS_SEEN;
+
+                    return EdgeStyles.UNSEEN;
+                }
+
+                /**
+                 * The logic for determining the appropriate label for an edge
+                 * @param {EdgeInfo} edge 
+                 * @returns the appropriate edge label
+                 */
+                function getEdgeLabel(edge) {
+                    if (edge.capacity === 0) return "";
+                    return edge.capacity.toString();
+                }
+
+                let frame = {
+                    vertices: graph.vertices.map(v => {
+                        return {
+                            label: getVertexLabel(v),
+                            style: getVertexStyle(v),
+                        };
+                    }),
+                    edges: graph.edges.map(row => row.map(e => {
+                        return {
+                            label: getEdgeLabel(e),
+                            style: getEdgeStyle(e),
+                        };
+                    })),
+                };
+                this.frames.push(frame);
+            }
+
+            /**
+             * 
+             * @returns all animation information
+             */
+            export() {
+                return {
+                    num_vertices: this.subject.vertices.length,
+                    num_frames: this.frames.length,
+                    frames: this.frames,
+                }
+            }
+        }
+
+        /**
+         * 
+         * @param {*} graphInfo 
+         * @returns 
+         */
+        function DinicsResult(graphInfo) {
+            const graph = new ResidualGraph(graphInfo);
+            const builder = new AnimationBuilder(graph);
+            graph.publish();
+
+            // for debugging
+            let maxFlow = 0;
+
+            // call the bfs() method and then do a dfs through the level graph
+            while (true) {
+                graph.bfs();
+
+                // first check if the end was reached
+                if (!graph.vertices[1].bfsSeen) break;
+
+                while (true) {
+                    // perform a dfs on the level graph
+                    graph.dfs();
+
+                    // check if the sink was reached
+                    if (!graph.vertices[1].dfsSeen) break;
+
+                    // backtrack through the dfs
+                    let pathVertices = [];
+                    let pathEdges = [];
+
+                    let minCapacity = Infinity;
+                    let backtracker = graph.vertices[1];
+                    while (true) {
+                        if (backtracker.dfsPred != null) {
+                            let edge = graph.edges[backtracker.dfsPred][backtracker.id];
+                            pathEdges.push(edge);
+                            minCapacity = Math.min(minCapacity, edge.capacity);
+
+                            // traverse the backtracker
+                            backtracker = graph.vertices[backtracker.dfsPred];
+                            pathVertices.push(backtracker);
+                        } else {
+                            break;
+                        }
+                    }
+
+                    for (let v of pathVertices) {
+                        v.dfsInPath = true;
+                    }
+
+                    for (let e of pathEdges) {
+                        e.dfsInPath = true;
+                    }
+
+                    graph.publish();
+
+                    // augment the flow
+                    for (let e of pathEdges) {
+                        e.capacity -= minCapacity;
+                        graph.edges[e.toVertex][e.fromVertex].capacity += minCapacity;
+                    }
+
+                    // for debugging
+                    maxFlow += minCapacity;
+                }
+            }
+
+            // for debugging
+            console.log(maxFlow);
+
+            return builder;
+        }
+
+        function EdmondsKarpResult(graphInfo) {
+            const graph = new ResidualGraph(graphInfo);
+            const builder = new AnimationBuilder(graph);
+            graph.publish();
+
+            // FOR DEBUGGING
+            let maxFlow = 0;
+
+            // call the bfs() method and straight up backtrack and augment
+            while (true) {
+                graph.bfs();
+
+                // check if the end was reached
+                if (!graph.vertices[1].bfsSeen) break;
+
+                // now backtrack through the bfs
+                let pathVertices = [];
+                let pathEdges = [];
+
+                let minCapacity = Infinity;
+                let backtracker = graph.vertices[1];
+                pathVertices.push(backtracker);
+                while (true) {
+                    if (backtracker.bfsPred != null) {
+                        let edge = graph.edges[backtracker.bfsPred][backtracker.id];
+                        pathEdges.push(edge);
+                        minCapacity = Math.min(minCapacity, edge.capacity);
+
+                        // traverse the backtracker
+                        backtracker = graph.vertices[backtracker.bfsPred];
+                        pathVertices.push(backtracker);
+                    } else {
+                        break;
+                    }
+                }
+
+                for (let v of pathVertices) {
+                    v.bfsInPath = true;
+                }
+
+                for (let e of pathEdges) {
+                    e.bfsInPath = true;
+                }
+
+                graph.publish();
+
+                // augment the flow
+                console.log(pathVertices);
+                console.log(pathEdges);
+                for (let e of pathEdges) {
+                    e.capacity -= minCapacity;
+                    graph.edges[e.toVertex][e.fromVertex].capacity += minCapacity;
+
+                    console.log(`augmenting edge from ${e.fromVertex} to ${e.toVertex} by ${minCapacity}`)
+
+                }
+
+                // for debugging
+                maxFlow += minCapacity;
+            }
+
+            // for debugging
+            console.log(maxFlow);
+
+            return builder;
+        }
+
+        function buildReturn() {
+
+        }
+
+        var nodes = new vis.DataSet([
+            { id: 1, label: 'source', color: 0 },
+            { id: 2, label: 'sink', color: 0 }
+        ]);
+
+        var edges = new vis.DataSet([
+        ]);
+
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+
+        var options = {
+            edges: {
+                arrows: {
+                    to: { enabled: true, scaleFactor: 1.2 }
+                }
+            },
+            physics: {
+                enabled: false,
+                stabilization: true
+            },
+            manipulation: {
+                enabled: true,
+                initiallyActive: true,
+                addNode: function (data, callback) {
+                    // This function is called by the library to add a node
+                    var newNodeId = nodes.length + 1;
+                    data.label = 'Node ' + newNodeId;
+                    data.id = newNodeId;
+                    callback(data); // Adds the node to the graph
+                },
+                addEdge: function (data, callback) {
+                    if (data.from === data.to) {
+                        alert("Connecting the node to itself is not allowed.");
+                    } else {
+                        var capacity = prompt("Enter edge capacity:", "1");
+                        if (capacity !== null) {
+                            data.label = capacity;
+                            callback(data);
+                        }
+                    }
+                }
+            }
+        };
+
+        var network = new vis.Network(container, data, options);
+        const speed = 1;
+        // wait what is this addNode function :sob:
+        function addNode() {
+            var newNodeId = nodes.length;
+            nodes.add({ id: newNodeId, label: 'Node ' + newNodeId });
+        }
+
+        function animateGraph() {
+            console.log("Start function");
+            let frameIndex = 0;
+
+            function processFrame() {
+                if (frameIndex >= animationData.frames.length) return; // Stop if no more frames
+
+                const frame = animationData.frames[frameIndex++];
+                console.log(frame);
+
+                // Clear existing nodes and edges
+                nodes.clear();
+                edges.clear();
+
+                console.log("Frame Index: " + frameIndex + "\n Node array length: " + nodes.length + "\n Edge array length: " + edges.length);
+
+                // Process each vertex in the frame
+                frame.vertices.forEach((vertex, index) => {
+                    let x = (index * 150) % 800; // Spread nodes across the width of the canvas
+                    let y = 200 + (Math.floor(index / 5) * 100); // Arrange nodes in rows
+
+                    // Custom handling for source and sink based on index or label
+                    if (vertex.label === 'Source' || vertex.label === 'source') {
+                        y -= 100; // Position source above other nodes
+                    } else if (vertex.label === 'Sink' || vertex.label === 'sink') {
+                        y += 100; // Position sink below other nodes
+                    }
+
+                    nodes.add({
+                        id: index,
+                        label: vertex.label || ('Node ' + index),
+                        x: x,
+                        y: y,
+                        color: doStyleColour(vertex.style),
+                        fixed: true
+                    });
+                });
+
+                // Process each edge in the frame
+                frame.edges.forEach((edge, fromIndex) => {
+                    if (edge.exists) { // Check if the edge should exist
+                        edges.add({
+                            from: edge.from,
+                            to: edge.to,
+                            label: edge.capacity.toString(),
+                            color: doStyleColour(edge.style),
+                            arrows: 'to'
+                        });
+                    }
+                });
+
+                // Schedule next frame update
+                setTimeout(processFrame, speed * 1000); // speed is the delay between frames in seconds
+            }
+
+            processFrame(); // Start the animation
+        }
+
+    </script>
 </body>
-<div class="l-container">
-	<div class="l-horizontal"></div>
-	<div class="l-vertical"></div>
-</div>	
 
 </html>
